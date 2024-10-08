@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NJ Tax Records Viewer</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        form { margin-bottom: 20px; }
+        input, button { margin: 5px; padding: 5px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .error { color: red; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+    <h1>NJ Tax Records Viewer</h1>
+    <form id="search-form">
+        <input type="text" id="block" name="block" placeholder="Block">
+        <input type="text" id="lot" name="lot" placeholder="Lot">
+        <input type="text" id="qualifier" name="qualifier" placeholder="Qualifier">
+        <input type="text" id="location" name="location" placeholder="Location">
+        <button type="submit">Search</button>
+    </form>
+    <div id="results"></div>
+
+    <script>
+        document.getElementById('search-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            fetch('/search', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('results');
+                if (data.success && data.data.length > 0) {
+                    let tableHtml = '<table><tr>';
+                    for (let key in data.data[0]) {
+                        tableHtml += `<th>${key}</th>`;
+                    }
+                    tableHtml += '</tr>';
+                    data.data.forEach(property => {
+                        tableHtml += '<tr>';
+                        for (let key in property) {
+                            tableHtml += `<td>${property[key]}</td>`;
+                        }
+                        tableHtml += '</tr>';
+                    });
+                    tableHtml += '</table>';
+                    resultsDiv.innerHTML = tableHtml;
+                } else if (data.success) {
+                    resultsDiv.innerHTML = '<p>No properties found.</p>';
+                } else {
+                    resultsDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('results').innerHTML = '<p class="error">An error occurred while fetching data.</p>';
+            });
+        });
+    </script>
+</body>
+</html>
